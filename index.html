@@ -1,0 +1,1787 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-T1T63YBCG1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-T1T63YBCG1');
+</script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LabCounter: contador bioquímico</title>
+<link rel="icon" type="image/png" href="logo400px.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+
+<style>
+
+* {
+      box-sizing: border-box;
+    }
+
+body {
+  margin: 0;
+  overflow-x: hidden;
+  font-family: "Roboto", sans-serif;
+  
+  background: #111;
+  color: white;
+
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+
+  touch-action: manipulation;
+}
+
+#app {
+  flex: 1;
+}
+  
+/* HOME */
+.home {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.home button {
+  flex: 1;
+  font-size: 30px;
+  border: none;
+  color: white;
+  font-weight: 500;
+  letter-spacing: +1px;
+  cursor: pointer;
+}
+
+/* MODULO */
+.modulo { padding: 10px; }
+
+h2 { text-align: center; }
+
+.total {
+  text-align: center;
+  margin-bottom: 5px;
+  font-size: 20px;
+}
+
+.objetivo {
+  text-align: center;
+  margin-bottom: 10px;
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+.alerta {
+  color: #62ff4d;
+  font-weight: bold;
+}
+
+.tzi {
+  text-align: center;
+  font-size: 18px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.boton {
+  position: relative;
+  box-sizing: border-box;
+  border-radius: 20px;
+  padding: 27px;
+  text-align: center;
+  font-size: 21px;
+  overflow-wrap: break-word;
+  cursor: pointer;
+  height: 180px;
+  max-width: 100%;
+}
+
+.valor { 
+  font-size: 38px; 
+  font-weight: bold;} 
+.porcentaje { font-size: 20px; opacity: 0.7; }
+.tecla { font-size: 12px; opacity: 0.5; }
+
+/* MENOS O RESTAR EN TARJETA */
+.menos {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 20px;
+  font-weight: 500;
+
+  opacity: 0.90;
+  background: rgba(0,0,0,0.5);
+  border-radius: 50%;
+
+  line-height: 1;
+}
+
+/* TOPBAR */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+}
+
+button {
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+}
+
+.topbar button {
+  flex: 1;
+  margin: 0 6px;
+  background: #2a2a2a;
+  color: #ddd;
+  border: 1px solid #444;
+  box-shadow: 0 2px 4px rgba(0,0,0,.4);
+  cursor: pointer;
+}
+
+
+
+/* BOTON CAFECITO */
+#cafecito {
+  padding: 10px;
+  opacity: 0.7;
+}
+
+/* ABOUT ME */
+.modal{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(5px);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  opacity: 0;
+  pointer-events: none;
+  transition: 0.2s ease;
+}
+
+.modal.show{
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-content{
+  background: #1e1e1e;
+  color: white;
+  padding: 20px;
+  border-radius: 15px;
+  width: 80%;
+  max-width: 500px;
+  text-align: center;
+}
+
+.about-btn{
+  position: fixed;
+  bottom: 8px;
+  right: 8px;
+  z-index: 9999;
+
+  width: 22px;
+  height: 22px;
+
+  border-radius: 50%;
+  border: none;
+
+  background: #2f3030;
+  color: white;
+
+  font-size: 10px;
+  font-weight: bold;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  cursor: pointer;
+
+  opacity: 0.9;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="app"></div>
+
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+
+<script>
+
+// CONFIG
+const OBJETIVOS = {
+  "F. Leucocitaria": 100,
+  "Morfología Espermática": 200,
+  "Vitalidad Espermática": 200
+};
+
+function obtenerObjetivo() {
+  return OBJETIVOS[moduloActivo] || 100;
+}
+
+const estructura = {
+  "F. Leucocitaria": [
+    {nombre:"Neu segm", color:"#e74c3c", key:"a"},
+    {nombre:"En Banda", color:"#f39c12", key:"s"},
+    {nombre:"Linfocitos", color:"#3498db", key:"d"},
+    {nombre:"Monocitos", color:"#2ecc71", key:"f"},
+    {nombre:"Eosinófilos", color:"#CE579C", key:"g"},
+    {nombre:"Basófilos", color:"#9a59b6", key:"h"},
+    {nombre:"Blastos", color:"#707173", key:"j"},
+
+    {nombre:"Promielos", color:"#2A5E41", key:"z"},
+    {nombre:"Mielocitos", color:"#387D56", key:"x"},
+    {nombre:"Metamielos", color:"#2CBF60", key:"c"},
+    {nombre:"L Reactivos", color:"#11BFBF", key:"v"},
+    {nombre:"Plasmocitos", color:"#F3702C", key:"b"},
+    {nombre:"Otros #1", color:"#121241", key:"n"},
+    {nombre:"Otros #2", color:"#A9CD1F", key:"m"}],
+  
+  "Espermograma": [],
+
+  "Morfología Espermática": [
+    {nombre:"Ideales", color:"#2ecc71", key:"q"},
+    {nombre:"Atípicos", color:"#e74c3c", key:"w"},
+    {nombre:"Cabezas", color:"#3498db", key:"a"},
+    {nombre:"Neck/Mid", color:"#f39c12", key:"s"},
+    {nombre:"Colas", color:"#de5974", key:"d"},
+    {nombre:"Exceso CR", color:"#545556", key:"f"},
+
+    {nombre:"Germinales", color:"#8e44ad", key:"z"},
+    {nombre:"Epiteliales", color:"#278782", key:"x"},
+    {nombre:"Leucocitos", color:"#9CB37E", key:"c"},
+    {nombre:"Hematíes", color:"#c0392b", key:"v"}],
+
+  "Vitalidad Espermática": [
+   {nombre:"Vivos", color:"#6c7a89", key:"a"},
+   {nombre:"Muertos", color:"#ff6fae", key:"s"}],
+
+  "Reticulocitos": [],
+  "Plaquetas": []
+};
+
+// ESTADO
+let moduloActivo = null;
+let datos = JSON.parse(localStorage.getItem("datos")) || {};
+let alertaSonada = false;
+let rbcPlaquetas = null;
+let camposPlaquetas = [];
+let valorCampo = 0;
+let campoActual = 1;
+let observaciones = JSON.parse(localStorage.getItem("obs")) || {};
+let mostrarExtras = false;
+
+let rbcReticulocitos = null;
+let htoReticulocitos = null;
+let referenciaReticulocitos = "Hombre";
+let htoNormalReticulocitos = 45;
+let camposReticulocitos = [];
+let valorReticulocitos = 0;
+let campoActualReticulocitos = 1;
+let observacionReticulocitos = "";
+
+
+for (let m in estructura) {
+  if (!datos[m]) datos[m] = {};
+  estructura[m].forEach(i => {
+    if (!datos[m][i.nombre]) datos[m][i.nombre] = 0;
+  });
+}
+
+const app = document.getElementById("app");
+
+// SONIDO
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function beep(tipo) {
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  const tonos = {
+  "Neu segm": 150,
+  "En Banda": 165,
+  "Linfocitos": 180,
+  "Monocitos": 195,
+  "Eosinófilos": 210,
+  "Basófilos": 225,
+  "Blastos": 240,
+  "Promielos": 255,
+  "Mielocitos": 270,
+  "Metamielos": 285,
+  "L Reactivos": 300,
+  "Plasmocitos": 315,
+  "Otros #1": 330,
+  "Otros #2": 345,
+
+  "Ideales": 130, 
+  "Atípicos": 230,
+  "Cabezas": 150, 
+  "Neck/Mid": 170, 
+  "Colas": 190, 
+  "Exceso CR": 200,
+  "Germinales": 215,
+  "Epiteliales": 230,
+  "Leucocitos": 245,
+  "Hematíes": 250, 
+
+  "Vivos": 150,
+  "Muertos": 190, 
+
+};
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  if (tonos[tipo]) {
+  osc.frequency.value = tonos[tipo];
+}
+else if (tipo === "sumar") {
+  osc.frequency.value = 520;
+}
+else if (tipo === "restar") {
+  osc.frequency.value = 300;
+}
+else {
+  osc.frequency.value = 180;
+}
+
+  osc.type = "triangle";
+
+const duracion =
+  tipo === "sumar" ? 0.04 : 0.12;
+
+gain.gain.setValueAtTime(
+  0,
+  audioCtx.currentTime
+);
+
+gain.gain.linearRampToValueAtTime(
+  0.42,
+  audioCtx.currentTime + 0.005
+);
+
+gain.gain.linearRampToValueAtTime(
+  0,
+  audioCtx.currentTime + duracion
+);
+
+osc.start();
+
+osc.stop(audioCtx.currentTime + duracion);
+}
+
+document.body.addEventListener("click", () => {
+  if (audioCtx.state === "suspended") audioCtx.resume();
+});
+
+// HOME
+function renderHome() {
+  app.innerHTML = `
+    <div class="home">
+      <button onclick="entrar('F. Leucocitaria')" style="background:#c0392b">🩸 F. Leucocitaria</button>
+      <button onclick="entrar('Espermograma')" style="background:#27ae60">🧬 Espermograma</button>
+      <button onclick="entrarPlaquetas()" style="background:#8e44ad">🟣 Plaquetas</button>
+      <button onclick="entrarReticulocitos()" style="background:#2980b9">🔵 Reticulocitos</button>
+    </div>
+  `;
+}
+
+// ENTRAR
+function entrar(mod) {
+  if (mod === "Espermograma") {
+  menuEspermograma();
+  return;
+}
+
+  moduloActivo = mod;
+  alertaSonada = false;
+  renderModulo();
+}
+
+function entrarPlaquetas() {
+  moduloActivo = "Plaquetas";
+  rbcPlaquetas = 0;
+  camposPlaquetas = [];
+  valorCampo = 0;
+  campoActual = 1;
+
+  delete observaciones["Plaquetas"];
+
+  localStorage.setItem(
+    "obs",
+    JSON.stringify(observaciones)
+  );
+
+
+  app.innerHTML = `
+
+  <div class="topbar">
+  <button onclick="volver()">⬅️</button>
+  <button style="visibility:hidden;">.</button>
+  <button style="visibility:hidden;">.</button>
+  <button style="visibility:hidden;">.</button>
+  </div>
+
+    <div style="padding:20px; text-align:center;">
+
+      <h2>🟣 Plaquetas</h2>
+
+
+      <p>RBC paciente (millones/mm³)</p>
+
+      <input
+        id="rbcInput"
+        type="number"
+        step="0.01"
+        placeholder="Ej: 4.85"
+        style="
+          font-size:30px;
+          padding:10px;
+          width:200px;
+          border-radius:15px;
+          border:none;
+          text-align:center;
+        "
+      >
+
+      <br><br>
+
+      <button
+        onclick="comenzarPlaquetas()"
+        style="
+          font-size:24px;
+          padding:15px 30px;
+          margin-top:10px;
+        "
+      >
+        Comenzar
+      </button>
+
+    </div>
+  `;
+}
+
+function comenzarPlaquetas() {
+
+  rbcPlaquetas =
+    parseFloat(document.getElementById("rbcInput").value);
+
+  if (!rbcPlaquetas) {
+    alert("Ingresá RBC");
+    return;
+  }
+
+  renderPlaquetas();
+}
+
+
+function entrarReticulocitos() {
+moduloActivo = "Reticulocitos";
+rbcReticulocitos = 0;
+htoReticulocitos = 0;
+camposReticulocitos = [];
+valorReticulocitos = 0;
+campoActualReticulocitos = 1;
+
+delete observaciones["Reticulocitos"];
+
+  localStorage.setItem(
+    "obs",
+    JSON.stringify(observaciones)
+  );
+
+
+  app.innerHTML = `
+
+  <div class="topbar">
+  <button onclick="volver()">⬅️</button>
+  <button style="visibility:hidden;">.</button>
+  <button style="visibility:hidden;">.</button>
+  <button style="visibility:hidden;">.</button>
+  </div>
+
+    <div style="padding:20px; text-align:center;">
+
+      <h2>🔵 Reticulocitos</h2>
+
+
+      <p>RBC paciente (millones/mm³)</p>
+
+      <input
+        id="rbcInput"
+        type="number"
+        step="0.01"
+        placeholder="Ej: 4.85"
+        style="
+          font-size:30px;
+          padding:10px;
+          width:200px;
+          border-radius:15px;
+          border:none;
+          text-align:center;
+        "
+      >
+
+      <br><br>
+
+
+<hr style="opacity:0.2; margin:25px 0;">
+
+<div style="
+  opacity:0.7;
+  font-size:20px;
+  margin-bottom:15px;
+">
+  Opcional: Con corrección por HTO
+</div>
+
+
+<p style="opacity:0.7;">HTO paciente (%)</p>
+
+<input
+  id="htoInput"
+  type="number"
+  step="0.1"
+  placeholder="Ej: 42"
+  style="
+    font-size:30px;
+    padding:10px;
+    width:200px;
+    border-radius:15px;
+    border:none;
+    text-align:center;
+    opacity:0.7;
+  "
+>
+
+<br><br>
+ 
+<label style="opacity:0.7;">
+  <input type="radio" name="refRet" value="45">
+  Hombre (45%)
+</label>
+
+<br>
+
+<label style="opacity:0.7;">
+  <input type="radio" name="refRet" value="41">
+  Mujer (41%)
+</label>
+
+<br>
+
+<label style="opacity:0.7;">
+  <input type="radio" name="refRet" value="35">
+  Embarazada (35%)
+</label>
+
+<br>
+
+<label style="opacity:0.7;">
+  <input
+    type="radio"
+    name="refRet"
+    value="otro"
+    onchange="
+      document.getElementById('otroHto').style.display='block';
+    "
+  >
+  Otro
+</label>
+
+<div
+  id="otroHto"
+  style="
+    display:none;
+    margin-top:10px;
+  "
+>
+
+<input
+  id="htoNormalInput"
+  type="number"
+  placeholder="Hto normal"
+  style="
+    font-size:24px;
+    padding:10px;
+    width:200px;
+    border-radius:15px;
+    border:none;
+    text-align:center;
+  "
+>
+
+</div>
+
+
+ <hr style="opacity:0.2; margin:25px 0;">
+
+
+ <button
+ onclick="comenzarReticulocitos()"
+ style="
+ font-size:24px;
+ padding:15px 30px;
+ margin-top:10px;
+  "
+ >
+ Comenzar
+ </button>
+
+  </div>
+  `;
+}
+
+
+
+function comenzarReticulocitos() {
+
+  rbcReticulocitos =
+    parseFloat(document.getElementById("rbcInput").value);
+
+  if (!rbcReticulocitos) {
+    alert("Ingresá RBC");
+    return;
+  }
+
+  htoReticulocitos =
+    parseFloat(document.getElementById("htoInput").value) || 0;
+
+let radioSeleccionado =
+  document.querySelector(
+    'input[name="refRet"]:checked'
+  );
+
+let ref =
+  radioSeleccionado
+    ? radioSeleccionado.value
+    : null;
+
+
+htoNormalReticulocitos = 0;
+referenciaReticulocitos = ""; 
+
+  if (ref === "otro") {
+
+    htoNormalReticulocitos =
+      parseFloat(
+        document.getElementById("htoNormalInput").value
+      );
+
+    if (!htoNormalReticulocitos) {
+      alert("Ingresá Hto normal");
+      return;
+    }
+
+    referenciaReticulocitos = "Otro";
+
+  }
+
+  else if (ref) {
+
+    htoNormalReticulocitos =
+      parseFloat(ref);
+
+    if (ref === "45")
+      referenciaReticulocitos = "Hombre";
+
+    if (ref === "41")
+      referenciaReticulocitos = "Mujer";
+
+    if (ref === "35")
+      referenciaReticulocitos = "Embarazada";
+  }
+
+  renderReticulocitos();
+
+}
+
+
+
+function renderReticulocitos() {
+
+  let suma =
+    camposReticulocitos.reduce((a,b)=>a+b,0);
+
+  let eritrocitosContados =
+  camposReticulocitos.length * 200;
+
+let retPct =
+  eritrocitosContados
+    ? (suma / eritrocitosContados) * 100
+    : 0;
+
+let retAbs =
+  Math.round(
+    (retPct / 100)
+    * (rbcReticulocitos * 1000000)
+  );
+
+let retCorregidos = null;
+
+if (
+  htoReticulocitos > 0 &&
+  htoNormalReticulocitos > 0
+) {
+
+  retCorregidos =
+    retPct *
+    (htoReticulocitos / htoNormalReticulocitos);
+
+}
+
+  app.innerHTML = `
+
+    <div class="topbar">
+      <button onclick="volver()">⬅️</button>
+      <button onclick="reiniciarReticulocitos()">🗑️</button>
+      <button onclick="exportExcel()">.xlsx</button>
+      <button onclick="exportIMG()">.jpg</button>
+    </div>
+
+    <h2>🔵 Reticulocitos</h2>
+
+    <div style="
+      text-align:center;
+      opacity:0.7;
+      margin-bottom:10px;
+    ">
+      RBC paciente: ${rbcReticulocitos} millones/mm³
+    </div>
+
+    <div
+      onclick="valorReticulocitos++; beep('sumar'); renderReticulocitos()"
+      style="
+        margin:20px;
+        padding:20px 40px 40px 40px;
+        border-radius:25px;
+        background:#2980b9;
+        text-align:center;
+        font-size:30px;
+        cursor: pointer;
+      ">
+
+      <div style="
+      font-size:11px;
+      opacity:0.6;
+      font-style: italic;
+      text-align:right;
+      ">
+        * Tocá cualquier parte o la tecla "q" para sumar!
+      </div>
+
+      <div style="
+        font-size:100px;
+        margin:0px 0px 20px;
+      ">
+        ${valorReticulocitos}
+      </div>
+
+      <div>
+
+        <button style="font-size:30px; padding:16px 24px;"
+        onclick="
+          event.stopPropagation();
+          if(valorReticulocitos>0){
+            valorReticulocitos--;
+            beep('restar');
+            renderReticulocitos();
+            cursor: pointer;
+          }
+        ">
+          −
+        </button>
+
+        <button style="font-size:30px; padding:16px 24px;"
+        onclick="
+          event.stopPropagation();
+          valorReticulocitos++;
+          beep('sumar');
+          renderReticulocitos();
+          cursor: pointer;
+        ">
+          +
+        </button>
+
+      </div>
+
+    </div>
+
+    <div style="text-align:center;">
+      <button
+        onclick="guardarCampoReticulocitos()"
+        style="
+          font-size:24px;
+          padding:15px 30px;
+          cursor: pointer;
+        "
+      >
+        Guardar campo
+      </button>
+    </div>
+
+    <div style="
+      margin:20px;
+      text-align:center;
+      font-size:20px;
+      opacity:0.7
+    ">
+      Conteo por campo:
+      ${camposReticulocitos.join(" • ")}
+
+    - Suma:
+     ${suma}
+    </div>
+
+
+    <div style="
+  text-align:center;
+  font-size:20px;
+  margin-top:20px;
+">
+
+Resultados  
+<br>
+  <span style="font-size:10px;">🔵</span><span style="font-weight:700;"> RET %:
+  ${retPct.toFixed(2)}%</span>
+
+  <br>
+
+  <span style="font-size:10px;">🔵</span><span style="font-weight:700;"> RET abs:
+  ${retAbs.toLocaleString()}/mm³</span>
+<br>
+  ${
+    retCorregidos !== null
+    ? `
+      <span style="font-size:10px;">🔵</span><span style="font-weight:700;"> RET corregidos:
+      ${retCorregidos.toFixed(2)}%</span>
+    `
+    : ""
+  }
+ <br>
+</div>
+
+<div style="margin:20px; text-align:center;">
+  <textarea
+    id="obsReticulocitos"
+    placeholder="Agregar comentario opcional..."
+    style="
+      width:100%;
+      height:60px;
+      border-radius:10px;
+      border:none;
+      padding:10px;
+      font-size:14px;
+      resize:none;
+      opacity:0.6;
+      box-sizing: border-box;
+    "
+    oninput="guardarObsReticulocitos()"
+  >${observaciones["Reticulocitos"] || ""}</textarea>
+</div>
+`;
+}
+
+function guardarCampoReticulocitos() {
+
+  camposReticulocitos.push(valorReticulocitos);
+
+  valorReticulocitos = 0;
+
+  campoActualReticulocitos++;
+
+  renderReticulocitos();
+
+}
+
+function reiniciarReticulocitos() {
+
+  if(!confirm("¿Reiniciar conteo?")) return;
+
+  camposReticulocitos = [];
+  valorReticulocitos = 0;
+  campoActualReticulocitos = 1;
+
+  delete observaciones["Reticulocitos"];
+
+  localStorage.setItem(
+    "obs",
+    JSON.stringify(observaciones)
+  );
+
+  renderReticulocitos();
+
+}
+
+function guardarObsReticulocitos() {
+
+  observaciones["Reticulocitos"] =
+    document.getElementById("obsReticulocitos").value;
+
+  localStorage.setItem(
+    "obs",
+    JSON.stringify(observaciones)
+  );
+
+}
+
+
+// VOLVER
+function volver() {
+  moduloActivo = null;
+  renderHome();
+}
+
+// RENDER
+function renderModulo() {
+  let total = Object.values(datos[moduloActivo]).reduce((a,b)=>a+b,0);
+
+  let objetivo = obtenerObjetivo();
+
+let totalMorfologia = 0;
+  let totalAtipicos = 0;
+
+  if (moduloActivo === "Morfología Espermática") {
+
+  totalMorfologia =
+    datos[moduloActivo]["Ideales"] +
+    datos[moduloActivo]["Atípicos"];
+
+  totalAtipicos =
+    datos[moduloActivo]["Cabezas"] +
+    datos[moduloActivo]["Neck/Mid"] +
+    datos[moduloActivo]["Colas"] +
+    datos[moduloActivo]["Exceso CR"];
+}
+
+let tzi = "";
+
+if (
+  moduloActivo === "Morfología Espermática" &&
+  datos[moduloActivo]["Atípicos"] > 0
+) {
+
+  tzi = (
+    totalAtipicos /
+    (datos[moduloActivo]["Atípicos"] || 1)
+    ).toFixed(2);
+
+}
+
+  if (total < objetivo)
+    alertaSonada = false;
+
+  if (total >= objetivo && !alertaSonada) {
+    beep("objetivo");
+    alertaSonada = true;
+  }
+
+  app.innerHTML = `
+    <div class="topbar">
+      <button onclick="volver()">⬅️</button>
+      <button onclick="reiniciar()">🗑️</button>
+      <button onclick="exportExcel()">.xlsx</button>
+      <button onclick="exportIMG()">.jpg</button>
+    </div>
+    <h2>${moduloActivo}</h2>
+    <div class="total ${total>=objetivo ? 'alerta' : ''}">
+      Total: ${total}
+    </div>
+    <div class="objetivo">Objetivo: ${objetivo}</div>
+
+
+<div class="grid" id="grid"></div>
+
+<br><br>
+
+${
+moduloActivo === "Morfología Espermática"
+? `<div class="tzi">
+  <u>Resultado adicional</u>
+  <br><br>
+  • Índice de Teratozoospermia: ${tzi}</div>`
+: ""
+}
+
+<br>
+
+<div style="margin:20px; text-align:center;">
+  <textarea
+    id="obsInput"
+    placeholder="Agregar comentario opcional..."
+    style="
+      width:100%;
+      height:60px;
+      border-radius:10px;
+      border:none;
+      padding:10px;
+      font-size:14px;
+      resize:none;
+      opacity:0.6;
+      box-sizing: border-box;
+    "
+    oninput="guardarObs()"
+  >${observaciones[moduloActivo] || ""}</textarea>
+</div>
+`;
+
+  const grid = document.getElementById("grid");
+
+  const extrasLeuco = [
+   "Promielos",
+   "Mielocitos",
+   "Metamielos",
+   "Plasmocitos",
+   "L Reactivos",
+   "Otros #1",
+   "Otros #2"
+  ];
+
+  estructura[moduloActivo].forEach(item => {
+    if (
+      moduloActivo === "F. Leucocitaria" &&
+      !mostrarExtras &&
+      extrasLeuco.includes(item.nombre)
+    ) {
+      return;
+    }
+    let val = datos[moduloActivo][item.nombre];
+    let pct = "";
+
+if (moduloActivo === "Morfología Espermática") {
+
+  if (
+    item.nombre === "Ideales" ||
+    item.nombre === "Atípicos"
+  ) {
+
+    pct = totalMorfologia
+      ? ((val / totalMorfologia) * 100).toFixed(1)
+      : 0;
+
+  }
+
+  else if (
+
+    item.nombre === "Cabezas" ||
+    item.nombre === "Neck/Mid" ||
+    item.nombre === "Colas" ||
+    item.nombre === "Exceso CR"
+
+  ) {
+
+    pct = totalAtipicos
+      ? ((val / totalAtipicos) * 100).toFixed(1)
+      : 0;
+
+  }
+
+ else if (
+    item.nombre === "Leucocitos" ||
+    item.nombre === "Hematíes" ||
+    item.nombre === "Epiteliales" ||
+    item.nombre === "Germinales"
+  ) {
+
+    pct = totalMorfologia
+      ? ((val / totalMorfologia) * 100).toFixed(1)
+      : 0;
+
+  }
+
+}
+else {
+
+  pct = total
+    ? ((val / total) * 100).toFixed(1)
+    : 0;
+
+}
+
+    let btn = document.createElement("div");
+    btn.className = "boton";
+    btn.style.background = item.color;
+
+    btn.innerHTML = `
+      <div>${item.nombre}</div>
+      <div class="tecla">(${item.key})</div>
+      <div class="valor">${val}</div>
+      ${pct !== ""
+  ? `<div class="porcentaje">${pct}%</div>`
+  : ""
+}
+      <div class="menos">↺</div>
+    `;
+
+    // SUMAR
+    btn.onclick = () => {
+      datos[moduloActivo][item.nombre]++;
+      beep(item.nombre);
+      guardar();
+    };
+
+    // RESTAR
+    btn.querySelector(".menos").onclick = (e) => {
+      e.stopPropagation();
+      if (datos[moduloActivo][item.nombre] > 0) {
+        datos[moduloActivo][item.nombre]--;
+        beep("restar");
+        guardar();
+      }
+    };
+
+    grid.appendChild(btn);
+  });
+  if (moduloActivo === "F. Leucocitaria") {
+
+    let btnExtras = document.createElement("div");
+
+    btnExtras.className = "boton";
+
+    btnExtras.style.background = "#2c3e50";
+
+    btnExtras.innerHTML =
+      mostrarExtras
+      ? "➖ Ocultar Extras"
+      : "➕ Extras";
+
+    btnExtras.onclick = () => {
+
+      mostrarExtras = !mostrarExtras;
+
+      renderModulo();
+
+    };
+
+    grid.appendChild(btnExtras);
+
+  }
+}
+
+
+// TECLADO
+document.addEventListener("keydown", (e) => {
+  if (
+  document.activeElement.tagName === "TEXTAREA" ||
+  document.activeElement.tagName === "INPUT"
+) {
+  return;
+}
+  
+  if (!moduloActivo) return;
+
+  let tecla = e.key.toLowerCase();
+
+  if (moduloActivo === "Plaquetas") {
+
+  if (tecla === "q") {
+    valorCampo++;
+    beep("sumar");
+    renderPlaquetas();
+  }
+
+  if (tecla === "z" && valorCampo > 0) {
+    valorCampo--;
+    beep("restar");
+    renderPlaquetas();
+  }
+
+  return;
+}
+
+  if (moduloActivo === "Reticulocitos") {
+
+  if (tecla === "q") {
+    valorReticulocitos++;
+    beep("sumar");
+    renderReticulocitos();
+  }
+
+  if (tecla === "z" && valorReticulocitos > 0) {
+    valorReticulocitos--
+    beep("restar");
+    renderReticulocitos();
+  }
+
+  return;
+}
+
+  for (let item of estructura[moduloActivo]) {
+    if (item.key === tecla) {
+
+      if (e.shiftKey) {
+        if (datos[moduloActivo][item.nombre] > 0) {
+          datos[moduloActivo][item.nombre]--;
+          beep("restar");
+        }
+      } else {
+        datos[moduloActivo][item.nombre]++;
+        beep(item.nombre);
+      }
+
+      guardar();
+      return;
+    }
+  }
+});
+
+// GUARDAR
+function guardar() {
+  localStorage.setItem("datos", JSON.stringify(datos));
+  renderModulo();
+}
+
+// EXPORT
+function exportExcel() {
+
+let filas = [];
+
+
+  // exportar solo plaquetas
+if (moduloActivo === "Plaquetas") {
+  let suma =
+    camposPlaquetas.reduce((a,b)=>a+b,0);
+
+  let resultado =
+    Math.round(
+      ((suma / camposPlaquetas.length)
+      * rbcPlaquetas * 1000000)
+      / 200
+    );
+
+  filas.push({
+    Modulo:"Plaquetas",
+    Item:"RBC paciente",
+    Valor:rbcPlaquetas
+  });
+
+  filas.push({
+    Modulo:"Plaquetas",
+    Item:"Campos",
+    Valor:camposPlaquetas.join(" • ")
+  });
+
+  filas.push({
+    Modulo:"Plaquetas",
+    Item:"Resultado",
+    Valor:resultado
+  });
+
+  filas.push({
+    Modulo:"Plaquetas",
+    Item:"Observación",
+    Valor:observaciones["Plaquetas"] || ""
+  });
+
+}
+
+else if (moduloActivo === "Reticulocitos") {
+
+  // exportar solo reticulocitos
+let suma =
+    camposReticulocitos.reduce((a,b)=>a+b,0);
+
+  let eritrocitosContados =
+    camposReticulocitos.length * 200;
+
+  let retPct =
+    eritrocitosContados
+      ? (suma / eritrocitosContados) * 100
+      : 0;
+
+  let retAbs =
+    Math.round(
+      (retPct / 100)
+      * (rbcReticulocitos * 1000000)
+    );
+
+  filas.push({
+    Modulo:"Reticulocitos",
+    Item:"RBC paciente",
+    Valor:rbcReticulocitos
+  });
+
+  filas.push({
+    Modulo:"Reticulocitos",
+    Item:"Hto paciente",
+    Valor:htoReticulocitos || ""
+  });
+
+  filas.push({
+    Modulo:"Reticulocitos",
+    Item:"Referencia",
+    Valor:referenciaReticulocitos || ""
+  });
+
+  filas.push({
+    Modulo:"Reticulocitos",
+    Item:"Campos",
+    Valor:camposReticulocitos.join(" • ")
+  });
+
+  filas.push({
+    Modulo:"Reticulocitos",
+    Item:"RET",
+    Valor:suma
+  });
+
+  filas.push({
+    Modulo:"Reticulocitos",
+    Item:"RET %",
+    Valor:retPct.toFixed(2)
+  });
+
+  filas.push({
+    Modulo:"Reticulocitos",
+    Item:"RET abs",
+    Valor:retAbs
+  });
+
+  if (
+    htoReticulocitos > 0 &&
+    htoNormalReticulocitos > 0
+  ) {
+
+    filas.push({
+      Modulo:"Reticulocitos",
+      Item:"RET corregidos",
+      Valor:
+        (
+          retPct *
+          (htoReticulocitos / htoNormalReticulocitos)
+        ).toFixed(2)
+    });
+
+  }
+
+  filas.push({
+    Modulo:"Reticulocitos",
+    Item:"Observación",
+    Valor:observaciones["Reticulocitos"] || ""
+  });
+
+}
+
+else {
+
+  // exportar módulos normales
+
+  for (let item in datos[moduloActivo]) {
+
+  filas.push({
+    Modulo: moduloActivo,
+    Item: item,
+    Valor: datos[moduloActivo][item]
+  });
+
+}
+
+if (moduloActivo === "Morfología Espermática") {
+
+  const totalAtipicos =
+  (datos[moduloActivo]["Cabezas"] || 0) +
+  (datos[moduloActivo]["Neck/Mid"] || 0) +
+  (datos[moduloActivo]["Colas"] || 0) +
+  (datos[moduloActivo]["Exceso CR"] || 0);
+
+const atipicos =
+  datos[moduloActivo]["Atípicos"] || 0;
+
+const tzi =
+  atipicos > 0
+    ? (totalAtipicos / atipicos).toFixed(2)
+    : "";
+
+  filas.push({
+    Modulo: moduloActivo,
+    Item: "TZI",
+    Valor: tzi
+  });
+}
+
+filas.push({
+  Modulo: moduloActivo,
+  Item: "Observación",
+  Valor: observaciones[moduloActivo] || ""
+});
+}
+
+
+  const ws = XLSX.utils.json_to_sheet(filas);
+
+  const wb = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(wb, ws, "Resultados");
+
+  let ahora = new Date();
+
+let fecha =
+  ahora.toISOString()
+  .slice(0,16)
+  .replace("T","_")
+  .replace(":","-");
+
+XLSX.writeFile(
+  wb,
+  `ContadorLab_${fecha}.xlsx`
+);
+}
+
+function exportIMG() {
+  html2canvas(document.body).then(canvas => {
+    let a = document.createElement("a");
+    a.href = canvas.toDataURL();
+    a.download = "captura.jpg";
+    a.click();
+  });
+}
+function reiniciar() {
+
+  if (!confirm("¿Reiniciar conteo?")) return;
+
+  for (let item of estructura[moduloActivo]) {
+    datos[moduloActivo][item.nombre] = 0;
+  }
+
+  delete observaciones[moduloActivo];
+
+  localStorage.setItem(
+   "obs",
+   JSON.stringify(observaciones)
+);
+
+  guardar();
+}
+
+function renderPlaquetas() {
+
+  let suma =
+    camposPlaquetas.reduce((a,b)=>a+b,0);
+
+  let resultado =
+    Math.round(((suma / camposPlaquetas.length || 0)
+    * rbcPlaquetas * 1000000)/200);
+
+  app.innerHTML = `
+
+    <div class="topbar">
+      <button onclick="volver()">⬅️</button>
+      <button onclick="reiniciarPlaquetas()">🗑️</button>
+      <button onclick="exportExcel()">.xlsx</button>
+      <button onclick="exportIMG()">.jpg</button>
+    </div>
+
+    <h2>🟣 Plaquetas</h2>
+
+    <div style="
+      text-align:center;
+      opacity:0.7;
+      margin-bottom:10px;
+    ">
+      RBC paciente: ${rbcPlaquetas} millones/mm³
+    </div>
+
+    <div
+      onclick="valorCampo++; beep('sumar'); renderPlaquetas()"
+      style="
+        margin:20px;
+        padding:40px;
+        border-radius:25px;
+        background:#8e44ad;
+        text-align:center;
+        font-size:30px;
+        cursor: pointer;
+      ">
+
+    <div style="
+      font-size:11px;
+      opacity:0.6;
+      font-style: italic;
+      text-align:right;
+      ">
+        * Tocá cualquier parte o la tecla "q" para sumar! 
+      </div>
+
+      <div style="
+        font-size:100px;
+        margin:0px 0px 20px;
+      ">
+        ${valorCampo}
+      </div>
+
+      <div>
+
+        <button style="font-size:30px; padding:16px 24px;"
+        onclick="
+          event.stopPropagation();
+          if(valorCampo>0){
+            valorCampo--;
+            beep('restar');
+            renderPlaquetas();
+            cursor: pointer;
+          }
+        ">
+          −
+        </button>
+
+        <button style="font-size:30px; padding:16px 24px;"
+        onclick="
+          event.stopPropagation();
+          valorCampo++;
+          beep('sumar');
+          renderPlaquetas();
+          cursor: pointer;
+        ">
+          +
+        </button>
+
+      </div>
+
+    </div>
+
+    <div style="text-align:center;">
+      <button
+        onclick="guardarCampo()"
+        style="
+          font-size:24px;
+          padding:15px 30px;
+          
+        "
+      >
+        Guardar campo
+      </button>
+    </div>
+
+    <div style="
+      margin:20px;
+      text-align:center;
+      font-size:20px;
+      opacity:0.80;
+    ">
+      Conteo por campo:
+      ${camposPlaquetas.join(" • ")}
+
+    - Suma:
+     ${suma}</div>
+
+    <div style="
+  text-align:center;
+  font-size:20px;
+  margin-top:20px;
+">
+   Resultados</div>
+ 
+    <div style="
+    text-align:center;
+    font-size:20px;
+    font-weight:700;
+    margin-top:10px;
+  ">
+  <span style="font-size:10px;">🟣</span> PLT: ${resultado.toLocaleString()}/mm³</div>
+
+<br>
+
+<div style="margin:20px; text-align:center;">
+  <textarea
+    id="obsPlaquetas"
+    placeholder="Agregar comentario opcional..."
+    style="
+      width:100%;
+      height:60px;
+      border-radius:10px;
+      border:none;
+      padding:10px;
+      font-size:14px;
+      resize:none;
+      opacity:0.6;
+      box-sizing: border-box;
+    "
+    oninput="guardarObsPlaquetas()"
+  >${observaciones["Plaquetas"] || ""}</textarea>
+</div>
+`;
+}
+
+function guardarCampo() {
+
+  camposPlaquetas.push(valorCampo);
+
+  valorCampo = 0;
+
+  campoActual++;
+
+  renderPlaquetas();
+}
+
+function reiniciarPlaquetas() {
+
+  if(!confirm("¿Reiniciar conteo?")) return;
+
+  camposPlaquetas = [];
+  valorCampo = 0;
+  campoActual = 1;
+
+  delete observaciones["Plaquetas"];
+
+  localStorage.setItem(
+   "obs",
+   JSON.stringify(observaciones)
+);
+
+  renderPlaquetas();
+}
+
+
+function menuEspermograma() {
+
+  app.innerHTML = `
+    <div class="home">
+
+      <button onclick="entrarMorfologia()" style="background:#3498db">
+        🧬 Morfología espermática
+      </button>
+
+      <button onclick="entrarVitalidad()" style="background:#9b59b6">
+        💜 Vitalidad espermática
+      </button>
+
+      <button onclick="volver()" style="background:#555">
+        ⬅️ Volver
+      </button>
+
+    </div>
+  `;
+}
+
+function entrarMorfologia() {
+  moduloActivo = "Morfología Espermática";
+  alertaSonada = false;
+  renderModulo();
+}
+
+function entrarVitalidad() {
+  moduloActivo = "Vitalidad Espermática";
+  alertaSonada = false;
+  renderModulo();
+}
+
+function guardarObs() {
+  let val = document.getElementById("obsInput").value;
+
+  observaciones[moduloActivo] = val;
+
+  localStorage.setItem(
+    "obs",
+    JSON.stringify(observaciones)
+  );
+}
+
+function guardarObsPlaquetas() {
+
+  observaciones["Plaquetas"] =
+    document.getElementById("obsPlaquetas").value;
+
+  localStorage.setItem(
+    "obs",
+    JSON.stringify(observaciones)
+  );
+
+}
+
+// INIT
+renderHome();
+
+</script>
+
+<!-- Cafecito -->
+<a href='https://cafecito.app/karcy' 
+ rel='noopener' target='_blank' 
+ style="margin-top:10px;
+ margin-left:20px; 
+ display:inline-block;"><img srcset='https://cdn.cafecito.app/imgs/buttons/button_3.png 1x, https://cdn.cafecito.app/imgs/buttons/button_3_2x.png 2x, https://cdn.cafecito.app/imgs/buttons/button_3_3.75x.png 3.75x' src='https://cdn.cafecito.app/imgs/buttons/button_3.png' alt='Invitame un café en cafecito.app' style="width:30vw; max-width:120px; height:auto;" /></a>
+ 
+<!-- Footer -->
+ 
+<button class="about-btn"
+  onclick="document.getElementById('aboutModal').classList.add('show')">
+  i
+</button>
+
+<div style="
+  text-align:center;
+  font-size:10px;
+  opacity:0.3;
+  margin:0px 15px 10px 15px;
+">
+  Herramienta de apoyo para laboratorios clínicos desarrollada por Bioq. Karen Nenna. Consultas y sugerencias: contadorbioquimico@gmail.com :)
+</div>
+
+<div id="aboutModal" class="modal" onclick="this.classList.remove('show')">
+  <div class="modal-content" onclick="event.stopPropagation()">
+<h3>About me</h3>
+
+<p>
+Mi nombre es Karen, soy Bioquímica con experiencia en clínica y en datos, con mucho entusiasmo por contribuir al área de salud.
+</p>
+
+<p>
+Esta herramienta fue diseñada como apoyo para el conteo de elementos al microscopio en el laboratorio. Para agilizar, minimizar errores de cálculo y obtener de forma inmediata los resultados finales en sus unidades correspondientes para informar. 
+</p>
+
+<p>
+Te vas a encontrar con una herramienta práctica que incorpora conceptos actualizados, y que sigo mejorando de forma continua. Espero que te sirva y recibir tus comentarios!   
+</p>
+
+<p>
+Consultas o sugerencias: <b>contadorbioquimico@gmail.com</b>
+</p>
+
+<p>
+<br>
+Karen Nenna
+</p>
+
+    <button onclick="document.getElementById('aboutModal').classList.remove('show')">
+      Cerrar
+    </button>
+  </div>
+</div>
+
+</body>
+</html>
