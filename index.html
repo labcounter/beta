@@ -1106,9 +1106,9 @@ if (moduloActivo === "Morfología Espermática") {
 
   ) {
 
-    pct = totalAtipicos
-      ? ((val / totalAtipicos) * 100).toFixed(1)
-      : 0;
+pct = totalMorfologia
+  ? ((val / totalMorfologia) * 100).toFixed(1)
+  : 0;
 
   }
 
@@ -1402,12 +1402,74 @@ else {
 
   // exportar módulos normales
 
+const ordenMorfologia = [
+  "Ideales",
+  "Atípicos",
+  "Cabezas",
+  "Neck/Mid",
+  "Colas",
+  "Exceso CR",
+  "Germinales",
+  "Epiteliales",
+  "Leucocitos",
+  "Hematíes"
+];
+
+if (moduloActivo === "Morfología Espermática") {
+
+  for (let item of ordenMorfologia) {
+
+    if (!(item in datos[moduloActivo])) continue;
+
+    filas.push({
+      Modulo: moduloActivo,
+      Item: item,
+      Valor: datos[moduloActivo][item],
+      "%": ""
+    });
+  }
+
+} else {
+
   for (let item in datos[moduloActivo]) {
 
-  filas.push({
-    Modulo: moduloActivo,
-    Item: item,
-    Valor: datos[moduloActivo][item]
+    filas.push({
+      Modulo: moduloActivo,
+      Item: item,
+      Valor: datos[moduloActivo][item],
+      "%": ""
+    });
+
+  }
+}
+
+if (
+  moduloActivo === "Morfología Espermática" ||
+  moduloActivo === "Vitalidad" ||
+  moduloActivo === "F. Leucocitaria"
+) {
+
+  const total =
+    moduloActivo === "Morfología Espermática"
+      ? (datos[moduloActivo]["Ideales"] || 0) +
+        (datos[moduloActivo]["Atípicos"] || 0)
+      : Object.values(datos[moduloActivo])
+          .reduce((a, b) => a + b, 0);
+
+  filas.forEach(fila => {
+
+    if (
+      fila.Modulo === moduloActivo &&
+      typeof fila.Valor === "number"
+    ) {
+
+      fila["%"] =
+        total > 0
+          ? ((fila.Valor / total) * 100).toFixed(1)
+          : "";
+
+    }
+
   });
 
 }
