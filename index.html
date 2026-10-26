@@ -418,6 +418,7 @@ function renderHome() {
       <button onclick="entrar('Espermograma')" style="background:#27ae60">🧬 Espermograma</button>
       <button onclick="entrarPlaquetas()" style="background:#8e44ad">🟣 Plaquetas</button>
       <button onclick="entrarReticulocitos()" style="background:#2980b9">🔵 Reticulocitos</button>
+      <button onclick="entrarEntrenamiento()" style="background:#c0392b">🤸 Entrenamiento</button>
     </div>
   `;
 }
@@ -1106,9 +1107,9 @@ if (moduloActivo === "Morfología Espermática") {
 
   ) {
 
-pct = totalMorfologia
-  ? ((val / totalMorfologia) * 100).toFixed(1)
-  : 0;
+    pct = totalAtipicos
+      ? ((val / totalAtipicos) * 100).toFixed(1)
+      : 0;
 
   }
 
@@ -1402,74 +1403,12 @@ else {
 
   // exportar módulos normales
 
-const ordenMorfologia = [
-  "Ideales",
-  "Atípicos",
-  "Cabezas",
-  "Neck/Mid",
-  "Colas",
-  "Exceso CR",
-  "Germinales",
-  "Epiteliales",
-  "Leucocitos",
-  "Hematíes"
-];
-
-if (moduloActivo === "Morfología Espermática") {
-
-  for (let item of ordenMorfologia) {
-
-    if (!(item in datos[moduloActivo])) continue;
-
-    filas.push({
-      Modulo: moduloActivo,
-      Item: item,
-      Valor: datos[moduloActivo][item],
-      "%": ""
-    });
-  }
-
-} else {
-
   for (let item in datos[moduloActivo]) {
 
-    filas.push({
-      Modulo: moduloActivo,
-      Item: item,
-      Valor: datos[moduloActivo][item],
-      "%": ""
-    });
-
-  }
-}
-
-if (
-  moduloActivo === "Morfología Espermática" ||
-  moduloActivo === "Vitalidad" ||
-  moduloActivo === "F. Leucocitaria"
-) {
-
-  const total =
-    moduloActivo === "Morfología Espermática"
-      ? (datos[moduloActivo]["Ideales"] || 0) +
-        (datos[moduloActivo]["Atípicos"] || 0)
-      : Object.values(datos[moduloActivo])
-          .reduce((a, b) => a + b, 0);
-
-  filas.forEach(fila => {
-
-    if (
-      fila.Modulo === moduloActivo &&
-      typeof fila.Valor === "number"
-    ) {
-
-      fila["%"] =
-        total > 0
-          ? ((fila.Valor / total) * 100).toFixed(1)
-          : "";
-
-    }
-
+  filas.push({
+    Modulo: moduloActivo,
+    Item: item,
+    Valor: datos[moduloActivo][item]
   });
 
 }
@@ -1786,6 +1725,359 @@ function guardarObsPlaquetas() {
 
 }
 
+
+// ===============================
+// ENTRENAMIENTO
+// ===============================
+
+const preguntasEntrenamiento = [
+  {
+    imagen: "imagenes_entrenamiento/neutrofilo.jpg",
+    correcta: "Neutrófilo",
+    opciones: ["Neutrófilo", "Linfocito", "Monocito", "Eosinófilo"]
+  },
+  {
+    imagen: "imagenes_entrenamiento/linfocito.jpg",
+    correcta: "Linfocito",
+    opciones: ["Monocito", "Linfocito", "Basófilo", "Neutrófilo"]
+  },
+  {
+    imagen: "imagenes_entrenamiento/monocito.jpg",
+    correcta: "Monocito",
+    opciones: ["Eosinófilo", "Neutrófilo", "Monocito", "Linfocito"]
+  },
+  {
+    imagen: "imagenes_entrenamiento/eosinofilo.jpg",
+    correcta: "Eosinófilo",
+    opciones: ["Basófilo", "Eosinófilo", "Monocito", "Linfocito"]
+  },
+  {
+    imagen: "imagenes_entrenamiento/basofilo.jpg",
+    correcta: "Basófilo",
+    opciones: ["Basófilo", "Neutrófilo", "Monocito", "Eosinófilo"]
+  },
+  {
+    imagen: "imagenes_entrenamiento/neutrofilo.jpg",
+    correcta: "Neutrófilo",
+    opciones: ["Linfocito", "Neutrófilo", "Basófilo", "Monocito"]
+  },
+  {
+    imagen: "imagenes_entrenamiento/linfocito.jpg",
+    correcta: "Linfocito",
+    opciones: ["Eosinófilo", "Monocito", "Linfocito", "Neutrófilo"]
+  },
+  {
+    imagen: "imagenes_entrenamiento/monocito.jpg",
+    correcta: "Monocito",
+    opciones: ["Monocito", "Basófilo", "Linfocito", "Eosinófilo"]
+  },
+  {
+    imagen: "imagenes_entrenamiento/eosinofilo.jpg",
+    correcta: "Eosinófilo",
+    opciones: ["Neutrófilo", "Eosinófilo", "Linfocito", "Basófilo"]
+  },
+  {
+    imagen: "imagenes_entrenamiento/basofilo.jpg",
+    correcta: "Basófilo",
+    opciones: ["Monocito", "Linfocito", "Neutrófilo", "Basófilo"]
+  }
+];
+
+let preguntaEntrenamientoActual = 0;
+let aciertosEntrenamiento = 0;
+let erroresEntrenamiento = 0;
+
+
+// ENTRAR AL ENTRENAMIENTO
+
+function entrarEntrenamiento() {
+
+  preguntaEntrenamientoActual = 0;
+  aciertosEntrenamiento = 0;
+  erroresEntrenamiento = 0;
+
+  renderEntrenamiento();
+}
+
+
+// MOSTRAR PREGUNTA
+
+function renderEntrenamiento() {
+
+  const pregunta =
+    preguntasEntrenamiento[preguntaEntrenamientoActual];
+
+  app.innerHTML = `
+
+    <div style="
+      max-width:800px;
+      margin:auto;
+      padding:20px;
+      text-align:center;
+    ">
+
+      <button
+        onclick="renderHome()"
+        style="
+          position:absolute;
+          left:20px;
+          top:20px;
+          background:#444;
+          color:white;
+          border:none;
+          border-radius:10px;
+          padding:10px 16px;
+          cursor:pointer;
+        ">
+        ← Volver
+      </button>
+
+      <h2 style="margin-top:50px;">
+        🧪 Entrenamiento
+      </h2>
+
+      <div style="
+        color:#aaa;
+        margin-bottom:15px;
+      ">
+        Fórmula leucocitaria
+      </div>
+
+      <div style="
+        color:#aaa;
+        margin-bottom:20px;
+      ">
+        Pregunta ${preguntaEntrenamientoActual + 1}
+        de ${preguntasEntrenamiento.length}
+      </div>
+
+      <div style="
+        background:#151515;
+        border-radius:18px;
+        padding:20px;
+        margin-bottom:20px;
+      ">
+
+        <img
+          src="${pregunta.imagen}"
+          style="
+            width:100%;
+            max-width:500px;
+            max-height:400px;
+            object-fit:contain;
+            border-radius:12px;
+            display:block;
+            margin:auto;
+          "
+        >
+
+      </div>
+
+      <h3>
+        ¿Qué célula es?
+      </h3>
+
+      <div style="
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:12px;
+        max-width:600px;
+        margin:20px auto;
+      ">
+
+        ${pregunta.opciones.map(opcion => `
+
+          <button
+            onclick="responderEntrenamiento('${opcion}')"
+            style="
+              padding:18px;
+              border:none;
+              border-radius:12px;
+              background:#2c2c2c;
+              color:white;
+              font-size:17px;
+              cursor:pointer;
+            "
+          >
+            ${opcion}
+          </button>
+
+        `).join("")}
+
+      </div>
+
+      <div style="
+        margin-top:20px;
+        color:#aaa;
+      ">
+        Aciertos: ${aciertosEntrenamiento}
+        &nbsp;&nbsp;|&nbsp;&nbsp;
+        Errores: ${erroresEntrenamiento}
+      </div>
+
+    </div>
+  `;
+}
+
+
+// RESPONDER
+
+function responderEntrenamiento(respuesta) {
+
+  const pregunta =
+    preguntasEntrenamiento[preguntaEntrenamientoActual];
+
+  const botones =
+    document.querySelectorAll(
+      'button[onclick^="responderEntrenamiento"]'
+    );
+
+  botones.forEach(boton => {
+    boton.disabled = true;
+    boton.style.cursor = "default";
+  });
+
+
+  if (respuesta === pregunta.correcta) {
+
+    aciertosEntrenamiento++;
+
+    botones.forEach(boton => {
+
+      if (boton.textContent.trim() === pregunta.correcta) {
+        boton.style.background = "#27ae60";
+      }
+
+    });
+
+  } else {
+
+    erroresEntrenamiento++;
+
+    botones.forEach(boton => {
+
+      if (boton.textContent.trim() === respuesta) {
+        boton.style.background = "#c0392b";
+      }
+
+      if (boton.textContent.trim() === pregunta.correcta) {
+        boton.style.background = "#27ae60";
+      }
+
+    });
+
+  }
+
+
+  setTimeout(() => {
+
+    preguntaEntrenamientoActual++;
+
+    if (
+      preguntaEntrenamientoActual >=
+      preguntasEntrenamiento.length
+    ) {
+
+      renderResultadoEntrenamiento();
+
+    } else {
+
+      renderEntrenamiento();
+
+    }
+
+  }, 900);
+}
+
+
+// RESULTADO FINAL
+
+function renderResultadoEntrenamiento() {
+
+  const total =
+    preguntasEntrenamiento.length;
+
+  const porcentaje =
+    Math.round((aciertosEntrenamiento / total) * 100);
+
+  app.innerHTML = `
+
+    <div style="
+      max-width:600px;
+      margin:auto;
+      padding:30px;
+      text-align:center;
+    ">
+
+      <h2>
+        🧪 Entrenamiento terminado
+      </h2>
+
+      <div style="
+        font-size:60px;
+        font-weight:bold;
+        margin:30px 0;
+      ">
+        ${porcentaje}%
+      </div>
+
+      <div style="
+        font-size:20px;
+        margin-bottom:30px;
+      ">
+        ${aciertosEntrenamiento}
+        aciertos
+        de
+        ${total}
+      </div>
+
+      <div style="
+        color:#aaa;
+        margin-bottom:30px;
+      ">
+        Errores: ${erroresEntrenamiento}
+      </div>
+
+      <button
+        onclick="entrarEntrenamiento()"
+        style="
+          background:#27ae60;
+          color:white;
+          border:none;
+          border-radius:12px;
+          padding:16px 30px;
+          font-size:17px;
+          cursor:pointer;
+          margin:5px;
+        ">
+        🔄 Repetir
+      </button>
+
+      <button
+        onclick="renderHome()"
+        style="
+          background:#444;
+          color:white;
+          border:none;
+          border-radius:12px;
+          padding:16px 30px;
+          font-size:17px;
+          cursor:pointer;
+          margin:5px;
+        ">
+        ← Inicio
+      </button>
+
+    </div>
+
+  `;
+}
+
+
+
+
+
+
 // INIT
 renderHome();
 
@@ -1811,7 +2103,7 @@ renderHome();
   opacity:0.3;
   margin:0px 15px 10px 15px;
 ">
-  Herramienta de apoyo para laboratorios clínicos desarrollada por Bioq. Karen Nenna. Consultas y sugerencias: contadorbioquimico@gmail.com :)
+  Herramienta de apoyo para laboratorios clínicos. Consultas y sugerencias: contadorbioquimico@gmail.com :)
 </div>
 
 <div id="aboutModal" class="modal" onclick="this.classList.remove('show')">
@@ -1819,23 +2111,24 @@ renderHome();
 <h3>About me</h3>
 
 <p>
-Mi nombre es Karen, soy Bioquímica con experiencia en clínica y en datos, con mucho entusiasmo por contribuir al área de salud.
+Mi nombre es Karen, soy Bioquímica de la Universidad de Buenos Aires y soy muy apasionada por la salud y la tecnologia.
 </p>
 
 <p>
-Esta herramienta fue diseñada como apoyo para el conteo de elementos al microscopio en el laboratorio. Para agilizar, minimizar errores de cálculo y obtener de forma inmediata los resultados finales en sus unidades correspondientes para informar. 
+Esta herramienta fue diseñada como apoyo para el conteo de elementos al microscopio. Para agilizar, minimizar errores de cálculo y obtener de forma inmediata los resultados finales en sus unidades correspondientes para informar. 
 </p>
 
 <p>
-Te vas a encontrar con una herramienta práctica que incorpora conceptos actualizados, y que sigo mejorando de forma continua. Espero que te sirva y recibir tus comentarios!   
+Te vas a encontrar con una herramienta práctica que incorpora conceptos actualizados y que sigo mejorando de forma continua. Espero recibir tus comentarios será un placer ajustarla y que sea funcional para todos. 
 </p>
 
 <p>
-Consultas o sugerencias: <b>contadorbioquimico@gmail.com</b>
+Consultas o sugerencias: <b>contadorbioquimico@gmail.com</b> o me encuentran por LinkedIn.
 </p>
 
 <p>
 <br>
+Saludos,
 Karen Nenna
 </p>
 
