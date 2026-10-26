@@ -418,7 +418,7 @@ function renderHome() {
       <button onclick="entrar('Espermograma')" style="background:#27ae60">🧬 Espermograma</button>
       <button onclick="entrarPlaquetas()" style="background:#8e44ad">🟣 Plaquetas</button>
       <button onclick="entrarReticulocitos()" style="background:#2980b9">🔵 Reticulocitos</button>
-      <button onclick="entrarEntrenamiento()" style="background:#c0392b">🤸 Entrenamiento</button>
+      <button onclick="entrarEntrenamiento()" style="background:#7b7e8c">🤸 Entrenamiento (en Construcción)</button>
     </div>
   `;
 }
@@ -1727,345 +1727,153 @@ function guardarObsPlaquetas() {
 
 
 // ===============================
-// ENTRENAMIENTO
+// MENÚ DE ENTRENAMIENTO
 // ===============================
-
-const preguntasEntrenamiento = [
-  {
-    imagen: "imagenes_entrenamiento/neutrofilo.jpg",
-    correcta: "Neutrófilo",
-    opciones: ["Neutrófilo", "Linfocito", "Monocito", "Eosinófilo"]
-  },
-  {
-    imagen: "imagenes_entrenamiento/linfocito.jpg",
-    correcta: "Linfocito",
-    opciones: ["Monocito", "Linfocito", "Basófilo", "Neutrófilo"]
-  },
-  {
-    imagen: "imagenes_entrenamiento/monocito.jpg",
-    correcta: "Monocito",
-    opciones: ["Eosinófilo", "Neutrófilo", "Monocito", "Linfocito"]
-  },
-  {
-    imagen: "imagenes_entrenamiento/eosinofilo.jpg",
-    correcta: "Eosinófilo",
-    opciones: ["Basófilo", "Eosinófilo", "Monocito", "Linfocito"]
-  },
-  {
-    imagen: "imagenes_entrenamiento/basofilo.jpg",
-    correcta: "Basófilo",
-    opciones: ["Basófilo", "Neutrófilo", "Monocito", "Eosinófilo"]
-  },
-  {
-    imagen: "imagenes_entrenamiento/neutrofilo.jpg",
-    correcta: "Neutrófilo",
-    opciones: ["Linfocito", "Neutrófilo", "Basófilo", "Monocito"]
-  },
-  {
-    imagen: "imagenes_entrenamiento/linfocito.jpg",
-    correcta: "Linfocito",
-    opciones: ["Eosinófilo", "Monocito", "Linfocito", "Neutrófilo"]
-  },
-  {
-    imagen: "imagenes_entrenamiento/monocito.jpg",
-    correcta: "Monocito",
-    opciones: ["Monocito", "Basófilo", "Linfocito", "Eosinófilo"]
-  },
-  {
-    imagen: "imagenes_entrenamiento/eosinofilo.jpg",
-    correcta: "Eosinófilo",
-    opciones: ["Neutrófilo", "Eosinófilo", "Linfocito", "Basófilo"]
-  },
-  {
-    imagen: "imagenes_entrenamiento/basofilo.jpg",
-    correcta: "Basófilo",
-    opciones: ["Monocito", "Linfocito", "Neutrófilo", "Basófilo"]
-  }
-];
-
-let preguntaEntrenamientoActual = 0;
-let aciertosEntrenamiento = 0;
-let erroresEntrenamiento = 0;
-
-
-// ENTRAR AL ENTRENAMIENTO
 
 function entrarEntrenamiento() {
 
-  preguntaEntrenamientoActual = 0;
-  aciertosEntrenamiento = 0;
-  erroresEntrenamiento = 0;
-
-  renderEntrenamiento();
-}
-
-
-// MOSTRAR PREGUNTA
-
-function renderEntrenamiento() {
-
-  const pregunta =
-    preguntasEntrenamiento[preguntaEntrenamientoActual];
-
   app.innerHTML = `
 
-    <div style="
-      max-width:800px;
-      margin:auto;
-      padding:20px;
-      text-align:center;
-    ">
+    <div class="home">
+
+      <h2 style="
+        grid-column:1/-1;
+        text-align:center;
+        margin-bottom:10px;
+      ">
+        🤸 Entrenamiento
+      </h2>
+
+      <div style="
+        grid-column:1/-1;
+        text-align:center;
+        color:#aaa;
+        margin-bottom:15px;
+      ">
+        Elegí un área para practicar
+      </div>
+
+
+      <button
+        onclick="entrarHematologiaEntrenamiento()"
+        style="background:#c0392b"
+      >
+        🩸 Hematología
+      </button>
+
+
+      <button
+        onclick="entrarOrinasEntrenamiento()"
+        style="background:#2980b9"
+      >
+        🧪 Orinas
+      </button>
+
+
+      <button
+        onclick="entrarParasitologiaEntrenamiento()"
+        style="background:#27ae60"
+      >
+        🦠 Parasitología
+      </button>
+
+
+      <button
+        onclick="entrarAndrologiaEntrenamiento()"
+        style="background:#8e44ad"
+      >
+        🧬 Andrología
+      </button>
+
+
+      <button
+        onclick="entrarEmbriologiaEntrenamiento()"
+        style="background:#e67e22"
+      >
+        🔬 Embriología
+      </button>
+
 
       <button
         onclick="renderHome()"
         style="
-          position:absolute;
-          left:20px;
-          top:20px;
+          grid-column:1/-1;
           background:#444;
-          color:white;
-          border:none;
-          border-radius:10px;
-          padding:10px 16px;
-          cursor:pointer;
-        ">
+          max-width:300px;
+          margin:10px auto 0;
+        "
+      >
         ← Volver
       </button>
 
-      <h2 style="margin-top:50px;">
-        🧪 Entrenamiento
-      </h2>
-
-      <div style="
-        color:#aaa;
-        margin-bottom:15px;
-      ">
-        Fórmula leucocitaria
-      </div>
-
-      <div style="
-        color:#aaa;
-        margin-bottom:20px;
-      ">
-        Pregunta ${preguntaEntrenamientoActual + 1}
-        de ${preguntasEntrenamiento.length}
-      </div>
-
-      <div style="
-        background:#151515;
-        border-radius:18px;
-        padding:20px;
-        margin-bottom:20px;
-      ">
-
-        <img
-          src="${pregunta.imagen}"
-          style="
-            width:100%;
-            max-width:500px;
-            max-height:400px;
-            object-fit:contain;
-            border-radius:12px;
-            display:block;
-            margin:auto;
-          "
-        >
-
-      </div>
-
-      <h3>
-        ¿Qué célula es?
-      </h3>
-
-      <div style="
-        display:grid;
-        grid-template-columns:1fr 1fr;
-        gap:12px;
-        max-width:600px;
-        margin:20px auto;
-      ">
-
-        ${pregunta.opciones.map(opcion => `
-
-          <button
-            onclick="responderEntrenamiento('${opcion}')"
-            style="
-              padding:18px;
-              border:none;
-              border-radius:12px;
-              background:#2c2c2c;
-              color:white;
-              font-size:17px;
-              cursor:pointer;
-            "
-          >
-            ${opcion}
-          </button>
-
-        `).join("")}
-
-      </div>
-
-      <div style="
-        margin-top:20px;
-        color:#aaa;
-      ">
-        Aciertos: ${aciertosEntrenamiento}
-        &nbsp;&nbsp;|&nbsp;&nbsp;
-        Errores: ${erroresEntrenamiento}
-      </div>
-
     </div>
+
   `;
 }
 
 
-// RESPONDER
+// ===============================
+// HEMATOLOGÍA
+// ===============================
 
-function responderEntrenamiento(respuesta) {
-
-  const pregunta =
-    preguntasEntrenamiento[preguntaEntrenamientoActual];
-
-  const botones =
-    document.querySelectorAll(
-      'button[onclick^="responderEntrenamiento"]'
-    );
-
-  botones.forEach(boton => {
-    boton.disabled = true;
-    boton.style.cursor = "default";
-  });
-
-
-  if (respuesta === pregunta.correcta) {
-
-    aciertosEntrenamiento++;
-
-    botones.forEach(boton => {
-
-      if (boton.textContent.trim() === pregunta.correcta) {
-        boton.style.background = "#27ae60";
-      }
-
-    });
-
-  } else {
-
-    erroresEntrenamiento++;
-
-    botones.forEach(boton => {
-
-      if (boton.textContent.trim() === respuesta) {
-        boton.style.background = "#c0392b";
-      }
-
-      if (boton.textContent.trim() === pregunta.correcta) {
-        boton.style.background = "#27ae60";
-      }
-
-    });
-
-  }
-
-
-  setTimeout(() => {
-
-    preguntaEntrenamientoActual++;
-
-    if (
-      preguntaEntrenamientoActual >=
-      preguntasEntrenamiento.length
-    ) {
-
-      renderResultadoEntrenamiento();
-
-    } else {
-
-      renderEntrenamiento();
-
-    }
-
-  }, 900);
-}
-
-
-// RESULTADO FINAL
-
-function renderResultadoEntrenamiento() {
-
-  const total =
-    preguntasEntrenamiento.length;
-
-  const porcentaje =
-    Math.round((aciertosEntrenamiento / total) * 100);
+function entrarHematologiaEntrenamiento() {
 
   app.innerHTML = `
 
-    <div style="
-      max-width:600px;
-      margin:auto;
-      padding:30px;
-      text-align:center;
-    ">
+    <div class="home">
 
-      <h2>
-        🧪 Entrenamiento terminado
+      <h2 style="
+        grid-column:1/-1;
+        text-align:center;
+        margin-bottom:10px;
+      ">
+        🩸 Hematología
       </h2>
 
       <div style="
-        font-size:60px;
-        font-weight:bold;
-        margin:30px 0;
-      ">
-        ${porcentaje}%
-      </div>
-
-      <div style="
-        font-size:20px;
-        margin-bottom:30px;
-      ">
-        ${aciertosEntrenamiento}
-        aciertos
-        de
-        ${total}
-      </div>
-
-      <div style="
+        grid-column:1/-1;
+        text-align:center;
         color:#aaa;
-        margin-bottom:30px;
+        margin-bottom:15px;
       ">
-        Errores: ${erroresEntrenamiento}
+        Elegí un entrenamiento
       </div>
+
+
+      <button
+        onclick="iniciarEntrenamientoLeucocitos()"
+        style="background:#c0392b"
+      >
+        🔬 Identificación celular
+      </button>
+
+
+      <button
+        onclick="alert('Próximamente')"
+        style="background:#7f8c8d"
+      >
+        🧮 Diferencial de 100 células
+      </button>
+
+
+      <button
+        onclick="alert('Próximamente')"
+        style="background:#7f8c8d"
+      >
+        🔵 Reticulocitos
+      </button>
+
 
       <button
         onclick="entrarEntrenamiento()"
         style="
-          background:#27ae60;
-          color:white;
-          border:none;
-          border-radius:12px;
-          padding:16px 30px;
-          font-size:17px;
-          cursor:pointer;
-          margin:5px;
-        ">
-        🔄 Repetir
-      </button>
-
-      <button
-        onclick="renderHome()"
-        style="
+          grid-column:1/-1;
           background:#444;
-          color:white;
-          border:none;
-          border-radius:12px;
-          padding:16px 30px;
-          font-size:17px;
-          cursor:pointer;
-          margin:5px;
-        ">
-        ← Inicio
+          max-width:300px;
+          margin:10px auto 0;
+        "
+      >
+        ← Volver
       </button>
 
     </div>
@@ -2074,7 +1882,48 @@ function renderResultadoEntrenamiento() {
 }
 
 
+// ===============================
+// ORINAS
+// ===============================
 
+function entrarOrinasEntrenamiento() {
+
+  alert("Entrenamiento de Orinas — próximamente");
+
+}
+
+
+// ===============================
+// PARASITOLOGÍA
+// ===============================
+
+function entrarParasitologiaEntrenamiento() {
+
+  alert("Entrenamiento de Parasitología — próximamente");
+
+}
+
+
+// ===============================
+// ANDROLOGÍA
+// ===============================
+
+function entrarAndrologiaEntrenamiento() {
+
+  alert("Entrenamiento de Andrología — próximamente");
+
+}
+
+
+// ===============================
+// EMBRIOLOGÍA
+// ===============================
+
+function entrarEmbriologiaEntrenamiento() {
+
+  alert("Entrenamiento de Embriología — próximamente");
+
+}
 
 
 
